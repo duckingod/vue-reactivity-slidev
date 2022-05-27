@@ -90,17 +90,14 @@ console.log('A2 =', A2)
 let A0 = 1;
 let A1 = 2;
 let A2;
-updateA2SideEffect(); // initialize A2
+update(); // initialize A2
 
-function updateA2SideEffect() {
+function update() {
   A2 = A0 + A1;
 }
 
-console.log('A2 =', A2);
-
 A0 = 2
-updateA2SideEffect();
-console.log('A0 + A1 =', A0 + A1);
+update();
 console.log('A2 =', A2);
 ```
 
@@ -108,7 +105,7 @@ console.log('A2 =', A2);
 
 # What is Reactivity
 
-```js {12-14}
+```js {10-11}
 let A0 = 1;
 let A1 = 2;
 let A2;
@@ -118,25 +115,39 @@ function update() {
   A2 = A0 + A1;
 }
 
-console.log('A2 =', A2);
-
 A0 = 2
 update();
 console.log('A2 =', A2);
 ```
 <br/>
-We gonna make this happen automatically
-
----
-
-# Concepts
 
 - The `update()` function produces a **side effect**, or **effect** for short,  
   because it modifies the state of the program.
 - `A0` and `A1` are considered **dependencies** of the effect,  
-  as their values are used to perform the effect. The effect is said to be a **subscriber** to its dependencies.
+  as their values are used to perform the effect.  
+  The effect is said to be a **subscriber** to its dependencies.
 
-We define `whenDepsChange(update)` which invokes `update()` to update 
+---
+
+# What is Reactivity: One Way Data Binding
+
+```js
+function update() {
+  A2 = A0 + A1; // 1
+}
+
+A0 = 2
+update(); // 2
+```
+<br/>
+
+1. `track`: When `update`, track and subscribe when a variable is read
+    - Both A0 and A1 are read when compute A0 + A1.
+    - `update` subscribe to `A1`, `A2`
+
+2. `trigger`: Detect and re-compute when a subscribed variable is mutated
+    - When `A0` is assigned a new value, notify all its subscriber effects to re-run.
+
 ---
 
 # Reactive
@@ -173,7 +184,6 @@ const state = reactive({ save: false });
 ```js {monaco}
 const track = (target, key) => console.log('track', target, key);
 const trigger = (target, key) => console.log('trigger', target, key);
-
 function reactive(obj) {
   return new Proxy(obj, {
     get(target, key) {
@@ -220,20 +230,92 @@ function ref(value) {
   return refObject
 }
 const count = ref(0);
-console.log('access value', count.value);
-count.value = 10;
 ```
 
 ---
 
-# Track the Dependencies
+# Limitation
 
-Track when a variable is read. E.g. when evaluating the expression A0 + A1, both A0 and A1 are read.
+1. Destructure a reactive object's property to a local variable, the reactivity is "disconnected" because access to the local variable no longer triggers the get / set proxy traps.
+```js {monaco}
+state = reactive({ save: false })
+save = state.save; // `save` loss reactivity
+```
 
-If a variable is read when there is a currently running effect, make that effect a subscriber to that variable. E.g. because A0 and A1 are read when update() is being executed, update() becomes a subscriber to both A0 and A1 after the first call.
+2. The returned proxy from reactive(), although behaving just like the original, has a different identity if we compare it to the original using the === operator.
+```js {monaco}
+original = { save: false };
+stateA = reactive(original);
+stateB = reactive(original);
+console.log(stateA === stateB);
+```
 
-Detect when a variable is mutated. E.g. when A0 is assigned a new value, notify all its subscriber effects to re-run.
+---
 
+# Two Way Data Binding
+
+```js
+function update() {
+  A2 = A0 + A1; // 1
+}
+
+A0 = 2
+update(); // 2
+```
+<br/>
+
+1. When `update`, track and subscribe when a variable is read
+    - Both A0 and A1 are read when compute A0 + A1.
+    - `update` subscribe to `A1`, `A2`
+
+2. Detect and re-compute when a subscribed variable is mutated
+    - When `A0` is assigned a new value, notify all its subscriber effects to re-run.
+
+---
+
+# One Way Data Binding - Track
+
+1. When `update`, track and subscribe when a variable is read
+    - Both A0 and A1 are read when compute A0 + A1.
+    - `update` subscribe to `A1`, `A2`
+<div grid="~ gap-4" class="grid-cols-[2fr,1fr]">
+
+<div>
+```js {|9-12|1-8|7|3-5|4|11}
+function watchEffect(update) {
+  const effect = () => {
+    activeEffect = effect
+    update()
+    activeEffect = null
+  }
+  effect()
+}
+let A2;
+watchEffect(() => {
+  A2 = A0.value + A1.value
+});
+```
+</div>
+
+<div>
+```js {1|3-8}
+let activeEffect // set to currently updating effect
+
+function track(target, key) {
+  if (activeEffect) {
+    getSubscribers(target, key).add(activeEffect)
+  }
+}
+```
+</div>
+
+</div>
+
+---
+
+WIP
+
+---
 
 
 # Additional Readings
