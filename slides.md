@@ -290,9 +290,9 @@ function watchEffect(update) {
   }
   effect()
 }
-let A2;
+let A2 = ref();
 watchEffect(() => {
-  A2 = A0.value + A1.value
+  A2.value = A0.value + A1.value
 });
 ```
 </div>
