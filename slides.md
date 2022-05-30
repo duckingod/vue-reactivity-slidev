@@ -30,7 +30,7 @@ Password: <input id="password"/> <br/>
 Strength: <span id="strength"></span>
 ```
 
-```js {4|1-3}
+```js {1-4|4|1-3}
 const handlePasswordChange = (val) => {
   $('#strength').text(val.target.value.length >= 8 ? 'strong' : 'weak');
 }
@@ -278,7 +278,7 @@ update(); // 2
 1. When `update`, track and subscribe when a variable is read
     - Both A0 and A1 are read when compute A0 + A1.
     - `update` subscribe to `A1`, `A2`
-<div grid="~ gap-4" class="grid-cols-[2fr,1fr]">
+<div grid="~ gap-4" class="grid-cols-[1fr,2fr]">
 
 <div>
 ```js {|9-12|1-8|7|3-5|4|11}
@@ -307,16 +307,138 @@ function track(target, key) {
   }
 }
 ```
+
+
 </div>
 
 </div>
 
 ---
 
-WIP
+# One Way Data Binding - Track
+
+1. When `update`, track and subscribe when a variable is read
+    - Both A0 and A1 are read when compute A0 + A1.
+    - `update` subscribe to `A1`, `A2`
+
+<div grid="~ gap-4" class="grid-cols-[1fr,2fr]">
+
+<div>
+
+```js {3-5}
+function watchEffect(update) {
+  const effect = () => {
+    activeEffect = effect
+    update()
+    activeEffect = null
+  }
+  effect()
+}
+let A2 = ref();
+watchEffect(() => {
+  A2.value = A0.value + A1.value
+});
+```
+
+</div>
+
+<div>
+
+```js
+let activeEffect // set to currently updating effect
+
+function track(target, key) {
+  if (activeEffect) {
+    getSubscribers(target, key).add(activeEffect)
+  }
+}
+```
+```js
+// A0.value = 2
+function trigger(target, key) {
+  getSubscribers(target, key).forEach((effect) => effect());
+}
+```
+
+</div>
+
+</div>
 
 ---
 
+# Watch Effect  Compute
+
+- Before
+```js
+let A2 = ref();
+watchEffect(() => {
+  A2.value = A0.value + A1.value
+});
+```
+
+<br/>
+
+- After
+```js
+let A2 = computed(() => A0.value + A1.value);
+```
+
+---
+
+# Update DOM
+
+
+```html
+Password: <input id="password"/> <br/>
+Strength: <span id="strength"></span>
+```
+
+<br/>
+
+- JQuery version
+
+```js
+const handlePasswordChange = (val) => {
+  $('#strength').text(val.target.value.length >= 8 ? 'strong' : 'weak');
+}
+$('#password').on('input', handlePasswordChange);
+```
+
+- Reactive version
+
+```js
+const password = ref('');
+const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
+
+$('#password').on('input', (event) => password.value = event.target.value);
+watchEffect(() => {
+  $('#strength').text(strength.value);
+});
+```
+
+---
+
+# Update DOM
+
+- Vue version
+
+```html
+Password: <input v-model="password"/> <br/>
+Strength: {{ strength }}
+```
+
+```js
+const password = ref('');
+const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
+```
+
+---
+
+# That's all, folks !
+
+## Any question
+
+---
 
 # Additional Readings
 - Vue document: [how-reactivity-works-in-vue](https://vuejs.org/guide/extras/reactivity-in-depth.html#how-reactivity-works-in-vue)
