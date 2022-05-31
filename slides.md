@@ -23,9 +23,7 @@ drawings:
 
 # Outline
 
-- Intro
-  - Old Days
-  - Magic!
+- Vue Basics
 - Concept
   - What is reactivity
 - Core Mechanism Implement
@@ -533,21 +531,26 @@ const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
 </script>
 ```
 
+- DOM is updated in `nextTick()`
+
 ---
 
-# That's all, folks !
+# That's all, folks!
 
-## Any question
+<br/>
 
-### Some related topic:
-- Timing
-  - DOM update in nextTick()
-- Ref v.s. reactive
-  - reactive is deep by default
+## You might also curious about
+- Ref v.s. Reactive
+  <!--
+    - Reactive is deep by default
     - Passing some large object / deep object by shallow reactive since props is a reactive
-- vue3 vue2 diff
-- vue basic?
-- powerful points
+  -->
+- Vue2 Vue3 Difference
+  <!--
+    - more flexible
+    - vue2 data bind on keys of `data` or vuex, vue3 you can declare data everywhere
+  -->
+
 
 ---
 
