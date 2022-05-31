@@ -1,6 +1,7 @@
 ---
 # try also 'default' to start simple
 theme: default
+background: https://images.unsplash.com/photo-1502189562704-87e622a34c85?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2100&q=80
 # apply any windi css classes to the current slide
 class: 'text-center'
 # https://sli.dev/custom/highlighters.html
@@ -15,11 +16,54 @@ drawings:
   persist: false
 ---
 
-# Vue Reactivity
+# Vue Reactivity API
+
 
 ---
 
-# Old days
+# Outline
+
+- Intro
+  - Old Days
+  - Magic!
+- Concept
+  - What is reactivity
+- Core Mechanism Implement
+  - What is reactivity
+  - Limitation
+  - One Way Data binding
+- Extra Topics
+  - Watch Effect v.s. Computed
+  - Update DOM
+
+---
+
+# Vue Basics
+Script, template, ref and computed
+
+<PasswordStrength/>
+
+```vue {1-10|1-5|7-10|3,8|4,9|1-10}
+<script setup>
+import { ref, computed } from 'vue';
+const password = ref("");
+const strength = computed(() => password.value.length >= 8 ? 'strong' : 'weak');
+</script>
+
+<template>
+Password: <input v-model="password"/> <br/>
+Strength: {{ strength }}
+</template>
+
+```
+
+- Password input bind to the `password` variable
+- `strength` is updated automatically after `password` changed.
+
+---
+
+# Vue Basics (Old days...)
+Control the data flow carefully
 
 <PasswordStrengthOld/>
 
@@ -30,31 +74,80 @@ Password: <input id="password"/> <br/>
 Strength: <span id="strength"></span>
 ```
 
-```js {1-4|4|1-3}
+```js {1-5|4|5|1-3}
 const handlePasswordChange = (val) => {
-  $('#strength').text(val.target.value.length >= 8 ? 'strong' : 'weak');
+  $('#strength').text(val && val.target.value.length >= 8 ? 'strong' : 'weak');
 }
+handlePasswordChange('')
 $('#password').on('input', handlePasswordChange);
 ```
 
-Maybe it's not too hard to understand, but we need to control the data flow carefully.
+---
+
+# Vue Basics (Magic!)
+Control the data flow **automatically**
+
+
+<PasswordStrength/>
+
+<div grid="~ gap-4" class="grid-cols-[1fr,1fr]">
+<div>
+
+```html
+Password: <input id="password"/> <br/>
+Strength: <span id="strength"></span>
+```
+
+```js
+const handlePasswordChange = (val) => {
+  $('#strength').text(
+    val && val.target.value.length >= 8
+      ? 'strong'
+      : 'weak')
+}
+handlePasswordChange('')
+$('#password').on('input', handlePasswordChange)
+```
+
+</div>
+<div>
+
+```vue {1-12|3-6,11}
+<script>
+const password = ref("");
+const strength = computed(() =>
+  password.value.length >= 8
+    ? 'strong'
+    : 'weak');
+</script>
+
+<template>
+Password: <input v-model="password"/> <br/>
+Strength: {{ strength }}
+</template>
+```
+
+</div>
+
+</div>
 
 ---
 
 # Magic!
 
-<PasswordStrengthOld/>
+<PasswordStrength/>
 
-```vue {1-10|8|3}
+```vue {1-10|3|8}
+<script>
+const password = ref("");
+const strength = computed(() => password.value.length >= 8 ? 'strong' : 'weak');
+</script>
+
 <template>
 Password: <input v-model="password"/> <br/>
 Strength: <span> {{ strength }} </span>
 </template>
 
-<script>
-const password = ref("");
-const strength = computed(() => password.value.length >= 8 ? 'strong' : 'weak');
-</script>
 ```
 
 - Vue automatically tracks the data flow in `computed`
@@ -66,6 +159,7 @@ const strength = computed(() => password.value.length >= 8 ? 'strong' : 'weak');
 ---
 
 # What is Reactivity
+Automatically notify & update related value
 
 ```js {monaco}
 let A0 = 1
@@ -85,6 +179,7 @@ console.log('A2 =', A2)
 ---
 
 # What is Reactivity
+Automatically notify & update related value
 
 ```js {monaco}
 let A0 = 1;
@@ -104,6 +199,7 @@ console.log('A2 =', A2);
 ---
 
 # What is Reactivity
+Automatically notify & update related value
 
 ```js {10-11}
 let A0 = 1;
@@ -129,7 +225,8 @@ console.log('A2 =', A2);
 
 ---
 
-# What is Reactivity: One Way Data Binding
+# What is Reactivity
+Automatically notify & update related value
 
 ```js
 function update() {
@@ -141,6 +238,8 @@ update(); // 2
 ```
 <br/>
 
+Hope it
+
 1. `track`: When `update`, track and subscribe when a variable is read
     - Both A0 and A1 are read when compute A0 + A1.
     - `update` subscribe to `A1`, `A2`
@@ -150,7 +249,8 @@ update(); // 2
 
 ---
 
-# Reactive
+# What is Reactivity (reactive)
+Automatically notify & update related value
 
 - Proxy
   - Track dependency in `get`
@@ -175,11 +275,11 @@ const state = reactive({ save: false });
 
 ---
 
-# Reactive
+# What is Reactivity (reactive)
+Automatically notify & update related value
 
-- Proxy
-  - Track dependency in `get`
-  - Emit value change event in `get`
+- Track dependency in `get`
+- Emit value change event in `get`
 
 ```js {monaco}
 const track = (target, key) => console.log('track', target, key);
@@ -208,7 +308,8 @@ const state = reactive({ save: false });
 -->
 ---
 
-# Ref
+# What is Reactivity (ref)
+Automatically notify & update related value
 
 - `getter`, `setter` on `value`
 
@@ -245,14 +346,13 @@ save = state.save; // `save` loss reactivity
 2. The returned proxy from reactive(), although behaving just like the original, has a different identity if we compare it to the original using the === operator.
 ```js {monaco}
 original = { save: false };
-stateA = reactive(original);
-stateB = reactive(original);
-console.log(stateA === stateB);
+state = reactive(original);
+console.log(state === original);
 ```
 
 ---
 
-# Two Way Data Binding
+# One Way Data Binding
 
 ```js
 function update() {
@@ -315,11 +415,10 @@ function track(target, key) {
 
 ---
 
-# One Way Data Binding - Track
+# One Way Data Binding - Trigger
 
-1. When `update`, track and subscribe when a variable is read
-    - Both A0 and A1 are read when compute A0 + A1.
-    - `update` subscribe to `A1`, `A2`
+2. Detect and re-compute when a subscribed variable is mutated
+    - When `A0` is assigned a new value, notify all its subscriber effects to re-run.
 
 <div grid="~ gap-4" class="grid-cols-[1fr,2fr]">
 
@@ -366,7 +465,7 @@ function trigger(target, key) {
 
 ---
 
-# Watch Effect  Compute
+# Watch Effect v.s. Compute
 
 - Before
 ```js
@@ -422,14 +521,16 @@ watchEffect(() => {
 
 - Vue version
 
-```html
+```vue
+<template>
 Password: <input v-model="password"/> <br/>
 Strength: {{ strength }}
-```
+</template>
 
-```js
+<script>
 const password = ref('');
 const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
+</script>
 ```
 
 ---
@@ -437,6 +538,16 @@ const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
 # That's all, folks !
 
 ## Any question
+
+### Some related topic:
+- Timing
+  - DOM update in nextTick()
+- Ref v.s. reactive
+  - reactive is deep by default
+    - Passing some large object / deep object by shallow reactive since props is a reactive
+- vue3 vue2 diff
+- vue basic?
+- powerful points
 
 ---
 

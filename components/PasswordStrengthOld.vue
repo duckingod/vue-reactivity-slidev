@@ -4,10 +4,10 @@ import $ from 'jquery';
 import { onMounted } from 'vue';
 
 const handleInput = (val) => {
-  $('#strength').text(val.target.value.length >= 8 ? 'strong' : 'weak');
+  $('#strength').text(val && val.target.value.length >= 8 ? 'strong' : 'weak');
 }
+handleInput('');
 onMounted($('#password').on('input', handleInput));
-
 </script>
 
 <template>

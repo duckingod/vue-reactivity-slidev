@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "slidev build",
+    "build:gh": "slidev build --base /vue-reactivity-slidev/",
     "dev": "slidev --open",
     "export": "slidev export"
   },
