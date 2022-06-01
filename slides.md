@@ -539,7 +539,7 @@ const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
 
 <br/>
 
-## You might also curious about
+## You might also curious about ...
 - Ref v.s. Reactive
   <!--
     - Reactive is deep by default
@@ -549,11 +549,43 @@ const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
   <!--
     - more flexible
     - vue2 data bind on keys of `data` or vuex, vue3 you can declare data everywhere
+    - vue2 cannot set array, vue 3 can since ref.value response a proxy: proxy can aware array change
   -->
-
 
 ---
 
-# Additional Readings
+# Appendix: Ref v.s. Reactive
+
+```js
+# https://github.com/vuejs/core/blob/0cf9ae62be21a6180f909e03091f087254ae3e52/packages/reactivity/src/ref.ts#L104-L112
+class RefImpl<T> {
+  // ...
+  constructor(value: T, public readonly __v_isShallow: boolean) {
+    this._rawValue = __v_isShallow ? value : toRaw(value)
+    this._value = __v_isShallow ? value : toReactive(value)
+  }
+
+  get value() {
+    trackRefValue(this)
+    return this._value
+  }
+  // ...
+}
+```
+
+Basically the same!  
+Choose one that make your code neat.
+
+---
+
+# Appendix: Vue2 Vue3 Difference
+
+- `Proxy` (`reactive`) is aware of object key / array change
+  - No more `Vue.set` in Vue3
+- More flexible when using
+
+---
+
+# Appendix: Additional Readings
 - Vue document: [how-reactivity-works-in-vue](https://vuejs.org/guide/extras/reactivity-in-depth.html#how-reactivity-works-in-vue)
 - Github: [@vue/reactivity](https://github.com/vuejs/core/tree/main/packages/reactivity)
