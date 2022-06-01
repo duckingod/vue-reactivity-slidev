@@ -131,7 +131,8 @@ Strength: {{ strength }}
 
 ---
 
-# Magic!
+# Vue Basics (Magic!)
+Control the data flow **automatically**
 
 <PasswordStrength/>
 
@@ -149,10 +150,9 @@ Strength: <span> {{ strength }} </span>
 ```
 
 - Vue automatically tracks the data flow in `computed`
-  - `password` is accessed, so `password` changed means `strength` might also be changed
 - Result
-  - Vue update `strength` after change `password`.
-  - update value in `span` after `strength` updated.
+  - Update `strength` after change `password`.
+  - Update value in `span` after `strength` updated.
 
 ---
 
@@ -163,9 +163,6 @@ Automatically notify & update related value
 let A0 = 1
 let A1 = 2
 let A2 = A0 + A1
-
-console.log('A0 + A1 =', A0 + A1)
-console.log('A2 =', A2)
 
 A0 = 2
 console.log('A0 + A1 =', A0 + A1)
@@ -240,7 +237,7 @@ Hope it
 
 1. `track`: When `update`, track and subscribe when a variable is read
     - Both A0 and A1 are read when compute A0 + A1.
-    - `update` subscribe to `A1`, `A2`
+    - `update` subscribe to `A0`, `A1`
 
 2. `trigger`: Detect and re-compute when a subscribed variable is mutated
     - When `A0` is assigned a new value, notify all its subscriber effects to re-run.
@@ -334,6 +331,7 @@ const count = ref(0);
 ---
 
 # Limitation
+Due to **Proxy**, we cannot ...
 
 1. Destructure a reactive object's property to a local variable, the reactivity is "disconnected" because access to the local variable no longer triggers the get / set proxy traps.
 ```js {monaco}
@@ -341,7 +339,7 @@ state = reactive({ save: false })
 save = state.save; // `save` loss reactivity
 ```
 
-2. The returned proxy from reactive(), although behaving just like the original, has a different identity if we compare it to the original using the === operator.
+2. The returned proxy from `reactive()` has a different identity if we compare it to the original using the === operator.
 ```js {monaco}
 original = { save: false };
 state = reactive(original);
@@ -351,6 +349,7 @@ console.log(state === original);
 ---
 
 # One Way Data Binding
+**Track** dependency and **trigger** update effects
 
 ```js
 function update() {
@@ -372,6 +371,7 @@ update(); // 2
 ---
 
 # One Way Data Binding - Track
+**Track** dependency and **trigger** update effects
 
 1. When `update`, track and subscribe when a variable is read
     - Both A0 and A1 are read when compute A0 + A1.
@@ -414,15 +414,18 @@ function track(target, key) {
 ---
 
 # One Way Data Binding - Trigger
+**Track** dependency and **trigger** update effects
 
 2. Detect and re-compute when a subscribed variable is mutated
     - When `A0` is assigned a new value, notify all its subscriber effects to re-run.
+
+<div style="height: 32px"></div>
 
 <div grid="~ gap-4" class="grid-cols-[1fr,2fr]">
 
 <div>
 
-```js {3-5}
+```js {20|3-5}
 function watchEffect(update) {
   const effect = () => {
     activeEffect = effect
@@ -441,7 +444,7 @@ watchEffect(() => {
 
 <div>
 
-```js
+```js {20}
 let activeEffect // set to currently updating effect
 
 function track(target, key) {
@@ -450,6 +453,7 @@ function track(target, key) {
   }
 }
 ```
+
 ```js
 // A0.value = 2
 function trigger(target, key) {
@@ -464,6 +468,7 @@ function trigger(target, key) {
 ---
 
 # Watch Effect v.s. Compute
+To write clean code
 
 - Before
 ```js
@@ -483,6 +488,7 @@ let A2 = computed(() => A0.value + A1.value);
 ---
 
 # Update DOM
+To write clean code
 
 
 ```html
@@ -516,6 +522,7 @@ watchEffect(() => {
 ---
 
 # Update DOM
+To write clean code
 
 - Vue version
 
@@ -536,6 +543,8 @@ const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
 ---
 
 # That's all, folks!
+Q & A Time!
+
 
 <br/>
 
@@ -555,6 +564,7 @@ const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
 ---
 
 # Appendix: Ref v.s. Reactive
+In case you're curious about it
 
 ```js
 # https://github.com/vuejs/core/blob/0cf9ae62be21a6180f909e03091f087254ae3e52/packages/reactivity/src/ref.ts#L104-L112
@@ -579,10 +589,11 @@ Choose one that make your code neat.
 ---
 
 # Appendix: Vue2 Vue3 Difference
+In case you're curious about it
 
 - `Proxy` (`reactive`) is aware of object key / array change
   - No more `Vue.set` in Vue3
-- More flexible when using
+- More flexible
 
 ---
 
