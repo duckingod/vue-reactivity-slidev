@@ -601,3 +601,25 @@ In case you're curious about it
 # Appendix: Additional Readings
 - Vue document: [how-reactivity-works-in-vue](https://vuejs.org/guide/extras/reactivity-in-depth.html#how-reactivity-works-in-vue)
 - Github: [@vue/reactivity](https://github.com/vuejs/core/tree/main/packages/reactivity)
+
+---
+
+# Additional discussion
+
+容易誤用 Watch 的情景
+
+```js
+const state = ref({ status: { saved: false } });
+watch(() => state, () => console.log(state)); // never trigger
+watch(() => state.status, () => console.log(state));
+// only trigger when `state.status = someObject`
+// not trigger when `state.status.saved = true`
+watch(state.value, () => console.log(state)); // never trigger
+watch(state, () => console.log(state)); // ok
+watch(() => state.value, () => console.log(state)); // ok, equal to pass `refObj` directly
+
+
+const shouldSave = computed(() => !state.status.saved));
+const flags = reactive({ shouldSave }); // ok, use flag.shouldSave.value to get the value
+const flags = reactive({ shouldSave: !state.status.saved }); // failed, shouldSave becoming primitive value
+```
