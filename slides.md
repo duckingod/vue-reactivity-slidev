@@ -33,7 +33,7 @@ drawings:
 - Extra Topics
   - Watch Effect v.s. Computed
   - Update DOM
-
+  - Reactivity on Watch (Callback, reactive, ref)
 ---
 
 # Vue Basics
@@ -52,7 +52,6 @@ const strength = computed(() => password.value.length >= 8 ? 'strong' : 'weak');
 Password: <input v-model="password"/> <br/>
 Strength: {{ strength }}
 </template>
-
 ```
 
 - Password input bind to the `password` variable
@@ -542,6 +541,207 @@ const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
 
 ---
 
+# Reactivity on Watch
+Look a little deeper into `watch`
+
+There are 4 ways to use watch, we are going to discuss 1. 2. 3. among them.
+
+```js
+const saved = ref(false);
+const state = reactive({ status: { saved: false } });
+
+const watchHandler = () => state.status.saved && console.log('Saved!')
+// 1. pass callback
+watch(() => saved.status.saved, watchHandler);
+
+// 2. pass reactive
+watch(state, watchHandler);
+
+// 3. pass ref
+watch(saved, watchHandler);
+
+// 4. pass array of three types above
+watch([state], watchHandler);
+```
+
+---
+
+# Reactivity on Watch (Callback)
+Look a little deeper into `watch`
+
+```js
+const saved = ref(false);
+const state = reactive({ status: { saved: false } });
+const watchHandler = () => state.status.saved && console.log('Saved!');
+watch(() => state.status.saved, watchHandler);
+```
+
+<br/>
+
+- Collecting trapped dependency in `track` when `() => state.status.saved` invoked
+- Result
+  1. Collect `state -> status` by `state.status`
+      - `watch` is triggered when `state.status = /* ... */`
+  2. Collect `status -> saved` by `status.saved`
+      - `watch` is triggered when `state.status.saved = /* ... */`
+
+---
+
+# Reactivity on Watch (Examples)
+Will `watch` be triggered? Click to view explanations.
+
+<div class="grid grid-cols-2 gap-3 my-2">
+
+<FlipCard>
+<template v-slot:default>
+
+```js
+watch(
+  () => state.status, watchHandler
+)
+state.status.saved = true;
+```
+
+</template>
+<template v-slot:flip>
+<h3 class="text-red-600">No</h3>
+
+Collected only `state.status` dependency, but triggered on `status.saved`
+
+</template>
+</FlipCard>
+
+<FlipCard>
+<template v-slot:default>
+
+```js
+const { status } = state;
+watch(
+  () => status.saved, watchHandler
+)
+status.saved = true;
+```
+
+</template>
+<template v-slot:flip>
+<h3 class="text-red-600">Yes (not recommended)</h3>
+
+Reactivity disconnected in this situation, since we only track `.saved` on the original object.
+
+```js
+state.status = { saved: false }
+state.status.saved = true; // not trigger
+```
+
+</template>
+</FlipCard>
+
+<FlipCard>
+<template v-slot:default>
+
+```js
+watch(
+  () => state, watchHandler
+)
+saved.value = true;
+```
+
+</template>
+<template v-slot:flip>
+<h3 class="text-red-600">No</h3>
+
+Not track on anything. 
+
+</template>
+</FlipCard>
+
+<FlipCard>
+<template v-slot:default>
+
+```js
+const saved = ref(false)
+watch(
+  () => saved, watchHandler
+)
+saved.value = true;
+```
+
+</template>
+<template v-slot:flip>
+<h3 class="text-red-600">No</h3>
+
+Treated as callback and not track on anything.
+
+</template>
+</FlipCard>
+
+</div>
+
+---
+
+# Reactivity on Watch (Reactive)
+Look a little deeper into `watch`
+
+```js
+const state = reactive({ status: { saved: false } });
+watch(state, watchHandler);
+```
+
+Equivalent to perform *DFS* on the object to `track` on every key, that is
+```js
+const dfs = (obj) => {
+  Object.entries(obj).forEach( /* ... */ )
+  // ...
+};
+watch(() => dfs(state), watchHandler);
+```
+
+Might low in performance, every change on the object triggers `watch`, and another `dfs` is invoked to re-calculate dependencies each time.
+
+---
+
+# Reactivity on Watch (Ref)
+Look a little deeper into `watch`
+
+- Default: Track on `.value` only
+```js
+const saved = ref(false);
+watch(saved, watchHandler);
+// Equivalent to
+watch(() => saved.value, watchHandler);
+```
+
+<br/>
+
+- With `{ deep: true }`: Track on `.value` and all nested keys.
+
+```js
+const state = ref({ status: { saved: false }});
+watch(state, watchHandler, { deep: true });
+// Equivalent to
+watch(() => dfs(saved.value), watchHandler);
+```
+
+<br/>
+
+> Notice that `ref({ a: 1 }).value` is also a `reactive`, thus we could track dependencies in it.
+
+---
+
+# Reactivity on Watch (Example)
+When will `watch` be triggered?
+
+```js
+const state = ref({ status: { saved: false } });
+watch(state, watchHandle);
+watch(state.value, watchHandle);
+watch(() => state, watchHandle);
+watch(() => state.value, watchHandle);
+watch(() => state.value.status, watchHandle);
+```
+
+---
+
 # That's all, folks!
 Q & A Time!
 
@@ -603,23 +803,3 @@ In case you're curious about it
 - Github: [@vue/reactivity](https://github.com/vuejs/core/tree/main/packages/reactivity)
 
 ---
-
-# Additional discussion
-
-容易誤用 Watch 的情景
-
-```js
-const state = ref({ status: { saved: false } });
-watch(() => state, () => console.log(state)); // never trigger
-watch(() => state.status, () => console.log(state));
-// only trigger when `state.status = someObject`
-// not trigger when `state.status.saved = true`
-watch(state.value, () => console.log(state)); // never trigger
-watch(state, () => console.log(state)); // ok
-watch(() => state.value, () => console.log(state)); // ok, equal to pass `refObj` directly
-
-
-const shouldSave = computed(() => !state.status.saved));
-const flags = reactive({ shouldSave }); // ok, use flag.shouldSave.value to get the value
-const flags = reactive({ shouldSave: !state.status.saved }); // failed, shouldSave becoming primitive value
-```
