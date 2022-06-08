@@ -544,7 +544,8 @@ const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
 # Reactivity on Watch
 Look a little deeper into `watch`
 
-There are 4 ways to use watch, we are going to discuss 1. 2. 3. among them.
+There are 4 ways to use watch, each of them have different behavior,  
+we are going to discuss 1. 2. 3. among them.
 
 ```js
 const saved = ref(false);
