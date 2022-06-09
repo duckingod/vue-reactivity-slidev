@@ -612,7 +612,7 @@ watch(
 ---
 
 # Reactivity on Watch (Examples)
-Will `watch` be triggered? Click to view explanations.
+Will `watch` be triggered? Click & hold to view explanations.
 
 <div class="grid grid-cols-2 gap-3 my-2">
 
