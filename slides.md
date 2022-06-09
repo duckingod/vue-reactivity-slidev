@@ -588,6 +588,29 @@ watch(() => state.status.saved, watchHandler);
 
 ---
 
+# Reactivity on Watch (Callback)
+Look a little deeper into `watch`
+
+```js
+const state = reactive({
+  inPrivate: true,
+  defaultConfig: { darkMode: false },
+  userConfig: { darkMode: true },
+});
+watch(
+  () => state.inPrivate ? state.defaultConfig.darkMode : state.userConfig.darkMode,
+  () => {
+    switchMode(state.inPrivate ? state.defaultConfig.darkMode : state.userConfig.darkMode)
+  }
+)
+```
+
+- It's ok to have complex logic in `source`, just make sure all requried dependencies are accessed
+  - When `state.inPrivate === true`, dependencies are `state.inPrivate`, `state.defaultConfig`, `defaultConfig.darkMode`, and `userConfig.darkMode = false` won't trigger `watch`
+  - Vice versa
+- Notice that dependencies are re-calculated everytime whenever `watch` is triggered 
+---
+
 # Reactivity on Watch (Examples)
 Will `watch` be triggered? Click to view explanations.
 
