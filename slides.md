@@ -33,7 +33,7 @@ drawings:
 - Extra Topics
   - Watch Effect v.s. Computed
   - Update DOM
-  - Reactivity on Watch (Callback, reactive, ref)
+- Reactivity on Watch (Callback, reactive, ref)
 ---
 
 # Vue Basics
@@ -580,36 +580,13 @@ watch(() => state.status.saved, watchHandler);
 
 1. Collecting trapped dependency in `track` when `() => state.status.saved` invoked
 2. Check whether return value of `() => state.status.saved` changed or not (by `Object.is`), and invoke `watchHandler` when the value is different.
-
+3. Update dependency when checking with `() => state.status.saved`
 - Result
   1. Collect `state -> status`, `status -> saved` by `state.status.saved`
       - Trigger 2. when `state.status = /* ... */`
       - Trigger 2. when `state.status.saved = /* ... */`
-  2. Invoke `watchHandler` when `() => state.status.saved` changed
+  2. Invoke `watchHandler` when `() => state.status.saved` changed, and update dependency.
 
----
-
-# Reactivity on Watch (Callback)
-Look a little deeper into `watch`
-
-```js
-const state = reactive({
-  inPrivate: true,
-  defaultConfig: { darkMode: false },
-  userConfig: { darkMode: true },
-});
-watch(
-  () => state.inPrivate ? state.defaultConfig.darkMode : state.userConfig.darkMode,
-  () => {
-    switchMode(state.inPrivate ? state.defaultConfig.darkMode : state.userConfig.darkMode)
-  }
-)
-```
-
-- It's ok to have complex logic in `source`, just make sure all requried dependencies are accessed
-  - When `state.inPrivate === true`, dependencies are `state.inPrivate`, `state.defaultConfig`, `defaultConfig.darkMode`, and `userConfig.darkMode = false` won't trigger `watch`
-  - Vice versa
-- Notice that dependencies are re-calculated everytime whenever `watch` is triggered 
 ---
 
 # Reactivity on Watch (Examples)
@@ -700,6 +677,30 @@ Not track on anything.
 </FlipCard>
 
 </div>
+
+---
+
+# Reactivity on Watch (Callback)
+Look a little deeper into `watch`
+
+```js
+const state = reactive({
+  inPrivate: true,
+  defaultConfig: { darkMode: false },
+  userConfig: { darkMode: true },
+});
+watch(
+  () => state.inPrivate ? state.defaultConfig.darkMode : state.userConfig.darkMode,
+  () => {
+    switchMode(state.inPrivate ? state.defaultConfig.darkMode : state.userConfig.darkMode)
+  }
+)
+```
+
+- It's ok to have complex logic in `source`, just make sure all requried dependencies are accessed
+  - When `state.inPrivate === true`, dependencies are `state.inPrivate`, `state.defaultConfig`, `defaultConfig.darkMode`, and `userConfig.darkMode = false` won't trigger `watch`
+  - Vice versa
+- Notice that dependencies are re-calculated everytime whenever `watch` is triggered 
 
 ---
 
