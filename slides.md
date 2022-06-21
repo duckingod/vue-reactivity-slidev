@@ -577,9 +577,9 @@ watch(() => state.status.saved, watchHandler);
 
 <br/>
 
-1. Collecting trapped dependency in `track` when `() => state.status.saved` invoked
-2. Check whether return value of `() => state.status.saved` changed or not (by `Object.is`), and invoke `watchHandler` when the value is different.
-3. Update dependency when checking with `() => state.status.saved`
+1. *Dependency* - Collecting and update dependency in `track` when `() => state.status.saved` invoked
+2. *Value Change* - Check whether return value of `() => state.status.saved` changed (by `Object.is`) 
+3. *Callback* - Invoke `watchHandler` when the value is different.
 
 <br/>
 
@@ -587,7 +587,7 @@ watch(() => state.status.saved, watchHandler);
   1. Collect `state -> status`, `status -> saved` by `state.status.saved`
       - Trigger 2. when `state.status = /* ... */`
       - Trigger 2. when `state.status.saved = /* ... */`
-  2. Invoke `watchHandler` when `() => state.status.saved` changed, and update dependency.
+  2. Invoke `watchHandler` when `() => state.status.saved` changed
 
 ---
 
@@ -776,15 +776,15 @@ Look a little deeper into `watch`
   1. `.value` is plain object, not `reactive`, hence you cannot track deep property change in `.value`
   2. Re-create `.value` whenever compute callback triggered.
 
-Though it's not tracking deep property, you could still use it in `watch`, to detemine whether the value changed, since `.value` will be re-created everytime.
+You could still use deep property in `watch` to detemine whether the value changed, since `.value` will be re-created everytime.
 
 ```js
 const state = reactive({ status: { saved: false } });
 const anotherStatus = computed(() => ({ saved: state.status.saved }));
 watch(() => anotherStatus.value.saved, watchHandler);
 state.status = { saved: false };
-// re-create .value by () => ({ saved: state.status.saved })
-// trigger () => anotherStatus.value.saved but value didn't change, hence watchHandler was not invoked
+// trigger .value re-create: `anotherStatus.value = { saved: false };`
+// trigger `() => anotherStatus.value.saved` but value didn't change, hence `watchHandler` was not invoked
 ```
 
 ---
