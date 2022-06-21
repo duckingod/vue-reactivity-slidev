@@ -544,24 +544,23 @@ const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
 # Reactivity on Watch
 Look a little deeper into `watch`
 
-There are 4 ways to use watch, each of them have different behavior,  
-we are going to discuss 1. 2. 3. among them.
+There are 5 ways to use watch, each of them have different behavior,  
+we are going to discuss 1 ~ 4 among them.
 
 ```js
 const saved = ref(false);
 const state = reactive({ status: { saved: false } });
-
+const computedSaved = computed(() => state.status.saved);
 const watchHandler = () => state.status.saved && console.log('Saved!')
 // 1. pass callback
 watch(() => saved.status.saved, watchHandler);
-
 // 2. pass reactive
 watch(state, watchHandler);
-
 // 3. pass ref
 watch(saved, watchHandler);
-
-// 4. pass array of three types above
+// 4. pass computed
+watch(computedSaved, watchHandler);
+// 5. pass array of three types above
 watch([state], watchHandler);
 ```
 
@@ -581,6 +580,9 @@ watch(() => state.status.saved, watchHandler);
 1. Collecting trapped dependency in `track` when `() => state.status.saved` invoked
 2. Check whether return value of `() => state.status.saved` changed or not (by `Object.is`), and invoke `watchHandler` when the value is different.
 3. Update dependency when checking with `() => state.status.saved`
+
+<br/>
+
 - Result
   1. Collect `state -> status`, `status -> saved` by `state.status.saved`
       - Trigger 2. when `state.status = /* ... */`
@@ -589,7 +591,7 @@ watch(() => state.status.saved, watchHandler);
 
 ---
 
-# Reactivity on Watch (Examples)
+# Reactivity on Watch (Callback)
 Will `watch` be triggered? Click & hold to view explanations.
 
 <div class="grid grid-cols-2 gap-3 my-2">
@@ -691,9 +693,7 @@ const state = reactive({
 });
 watch(
   () => state.inPrivate ? state.defaultConfig.darkMode : state.userConfig.darkMode,
-  () => {
-    switchMode(state.inPrivate ? state.defaultConfig.darkMode : state.userConfig.darkMode)
-  }
+  (isDarkMode) => switchMode(isDarkMode);
 )
 ```
 
@@ -712,17 +712,17 @@ const state = reactive({ status: { saved: false } });
 watch(state, watchHandler);
 ```
 
-Equivalent to perform *DFS* on the object to `track` on every key, that is
+Equivalent to perform *DFS* on the object to `track` on every key and force trigger (ignore value change check), that is
 ```js
 const dfs = (obj) => {
   Object.entries(obj).forEach( /* ... */ )
   // ...
-  return obj;
 };
-watch(() => dfs(state), watchHandler);
+watch(() => dfs(state), watchHandler); // ignore value change check
 ```
 
 Might low in performance, every change on the object triggers `watch`, and another `dfs` is invoked to re-calculate dependencies each time.
+
 `watch` with callback or `watchEffect` might faster.
 
 ---
@@ -740,13 +740,13 @@ watch(() => saved.value, watchHandler);
 
 <br/>
 
-- With `{ deep: true }`: Track on `.value` and all nested keys.
+- With `{ deep: true }`: Track on `.value` and all nested keys, ignore value change check.
 
 ```js
 const state = ref({ status: { saved: false }});
 watch(state, watchHandler, { deep: true });
 // Equivalent to
-watch(() => dfs(saved.value), watchHandler);
+watch(() => dfs(saved.value), watchHandler); // ignore value change check
 ```
 
 <br/>
@@ -755,7 +755,7 @@ watch(() => dfs(saved.value), watchHandler);
 
 ---
 
-# Reactivity on Watch (Example)
+# Reactivity on Watch (Ref)
 When will `watch` be triggered?
 
 ```js
@@ -769,25 +769,29 @@ watch(() => state.value.status, watchHandle);
 
 ---
 
+# Reactivity on Watch (Computed)
+Look a little deeper into `watch`
+
+`computed` is a `ref` but different in several ways:
+  1. `.value` is plain object, not `reactive`, hence you cannot track deep property change in `.value`
+  2. Re-create `.value` whenever compute callback triggered.
+
+Though it's not tracking deep property, you could still use it in `watch`, to detemine whether the value changed, since `.value` will be re-created everytime.
+
+```js
+const state = reactive({ status: { saved: false } });
+const anotherStatus = computed(() => ({ saved: state.status.saved }));
+watch(() => anotherStatus.value.saved, watchHandler);
+state.status = { saved: false };
+// re-create .value by () => ({ saved: state.status.saved })
+// trigger () => anotherStatus.value.saved but value didn't change, hence watchHandler was not invoked
+```
+
+---
+
 # That's all, folks!
 Q & A Time!
 
-
-<br/>
-<br/>
-
-### You might also curious about ...
-- Ref v.s. Reactive
-  <!--
-    - Reactive is deep by default
-    - Passing some large object / deep object by shallow reactive since props is a reactive
-  -->
-- Vue2 Vue3 Difference
-  <!--
-    - more flexible
-    - vue2 data bind on keys of `data` or vuex, vue3 you can declare data everywhere
-    - vue2 cannot set array, vue 3 can since ref.value response a proxy: proxy can aware array change
-  -->
 
 ---
 
