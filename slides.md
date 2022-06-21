@@ -773,17 +773,17 @@ watch(() => state.value.status, watchHandle);
 Look a little deeper into `watch`
 
 `computed` is a `ref` but different in several ways:
-  1. `.value` is plain object, not `reactive`, hence you cannot track deep property change in `.value`
+  1. `.value` is plain object, not `reactive`, hence you cannot track property change in `.value` directly
   2. Re-create `.value` whenever compute callback triggered.
 
-You could still use deep property in `watch` to detemine whether the value changed, since `.value` will be re-created everytime.
+As a result, you could still use deep property in `watch` to detemine whether the value changed, since `.value` will be re-created everytime.
 
 ```js
 const state = reactive({ status: { saved: false } });
 const anotherStatus = computed(() => ({ saved: state.status.saved }));
 watch(() => anotherStatus.value.saved, watchHandler);
 state.status = { saved: false };
-// trigger .value re-create: `anotherStatus.value = { saved: false };`
+// trigger .value re-create: `anotherStatus.value = { saved: false };` (pseudo)
 // trigger `() => anotherStatus.value.saved` but value didn't change, hence `watchHandler` was not invoked
 ```
 
