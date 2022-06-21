@@ -571,7 +571,6 @@ watch([state], watchHandler);
 Look a little deeper into `watch`
 
 ```js
-const saved = ref(false);
 const state = reactive({ status: { saved: false } });
 const watchHandler = () => state.status.saved && console.log('Saved!');
 watch(() => state.status.saved, watchHandler);
@@ -579,12 +578,14 @@ watch(() => state.status.saved, watchHandler);
 
 <br/>
 
-- Collecting trapped dependency in `track` when `() => state.status.saved` invoked
+1. Collecting trapped dependency in `track` when `() => state.status.saved` invoked
+2. Check whether return value of `() => state.status.saved` changed or not, and invoke `watchHandler` when the value is different.
+
 - Result
-  1. Collect `state -> status` by `state.status`
-      - `watch` is triggered when `state.status = /* ... */`
-  2. Collect `status -> saved` by `status.saved`
-      - `watch` is triggered when `state.status.saved = /* ... */`
+  1. Collect `state -> status`, `status -> saved` by `state.status.saved`
+      - Trigger 2. when `state.status = /* ... */`
+      - Trigger 2. when `state.status.saved = /* ... */`
+  2. Invoke `watchHandler` when `() => state.status.saved` changed
 
 ---
 
@@ -623,14 +624,33 @@ Will `watch` be triggered? Click & hold to view explanations.
 watch(
   () => state.status, watchHandler
 )
-state.status.saved = true;
+state.status = { saved: false };
+```
+
+</template>
+<template v-slot:flip>
+<h3 class="text-green-600">Yes</h3>
+
+The object changed, so vue treat this as a value change.
+
+</template>
+</FlipCard>
+
+<FlipCard>
+<template v-slot:default>
+
+```js
+watch(
+  () => state.status.saved, watchHandler
+)
+saved.status = { saved: false };
 ```
 
 </template>
 <template v-slot:flip>
 <h3 class="text-red-600">No</h3>
 
-Collected only `state.status` dependency, but triggered on `status.saved`
+`() => state.status.saved` still resolved as `false`, didn't change.
 
 </template>
 </FlipCard>
@@ -675,26 +695,6 @@ saved.value = true;
 <h3 class="text-red-600">No</h3>
 
 Not track on anything. 
-
-</template>
-</FlipCard>
-
-<FlipCard>
-<template v-slot:default>
-
-```js
-const saved = ref(false)
-watch(
-  () => saved, watchHandler
-)
-saved.value = true;
-```
-
-</template>
-<template v-slot:flip>
-<h3 class="text-red-600">No</h3>
-
-Treated as callback and not track on anything.
 
 </template>
 </FlipCard>
