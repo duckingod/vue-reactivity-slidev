@@ -577,7 +577,8 @@ watch(() => state.status.saved, watchHandler);
 
 <br/>
 
-1. *Dependency* - Collecting and update dependency in `track` when `() => state.status.saved` invoked
+`watch` is consisted by 3 steps
+1. *Dependency* - Collecting and update dependency in `() => state.status.saved` when triggered
 2. *Value Change* - Check whether return value of `() => state.status.saved` changed (by `Object.is`) 
 3. *Callback* - Invoke `watchHandler` when the value is different.
 
