@@ -579,7 +579,7 @@ watch(() => state.status.saved, watchHandler);
 <br/>
 
 1. Collecting trapped dependency in `track` when `() => state.status.saved` invoked
-2. Check whether return value of `() => state.status.saved` changed or not, and invoke `watchHandler` when the value is different.
+2. Check whether return value of `() => state.status.saved` changed or not (by `Object.is`), and invoke `watchHandler` when the value is different.
 
 - Result
   1. Collect `state -> status`, `status -> saved` by `state.status.saved`
@@ -687,7 +687,7 @@ state.status.saved = true; // not trigger
 watch(
   () => state, watchHandler
 )
-saved.value = true;
+state.status.saved = true;
 ```
 
 </template>
@@ -716,11 +716,13 @@ Equivalent to perform *DFS* on the object to `track` on every key, that is
 const dfs = (obj) => {
   Object.entries(obj).forEach( /* ... */ )
   // ...
+  return obj;
 };
 watch(() => dfs(state), watchHandler);
 ```
 
 Might low in performance, every change on the object triggers `watch`, and another `dfs` is invoked to re-calculate dependencies each time.
+`watch` with callback or `watchEffect` might faster.
 
 ---
 
