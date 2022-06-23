@@ -810,10 +810,11 @@ Tips to provide better performance
     - <span class="text-sm">An alternaltive solution is serialize the object into primitive value by `JSON.stringify` or some custom stable function</span>
 3. <span class="text-red-600 text-2xl">Do not </span>watch on a `computed` that represents an object.
     - <span class="text-sm">`computed().value` recreates every time, so value change check always passes even value unchanged.</span>
-4. <span class="text-green-600 text-2xl">Do </span>watch on a primitive value that returns from callback or in `ref`, `computed`, `reactive`
+4. <span class="text-green-600 text-2xl">Do </span>watch on a callback returning a primitive value or `ref`, `computed` with a primitive value
     - <span class="text-sm">So that vue could correctly monitor value change by using `Object.is`.</span>
-5. <span class="text-green-600 text-2xl">Do </span>watch object (`reactive`, `computed` ...) after you evaluated about performance.
+5. <span class="text-green-600 text-2xl">Do </span>watch object (`reactive`, `computed` ...) after you evaluated about the performance.
     - <span class="text-sm">Of course you can! Just be careful about that.</span>
+
 ---
 
 # That's all, folks!
