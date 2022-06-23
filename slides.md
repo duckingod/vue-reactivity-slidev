@@ -545,7 +545,7 @@ const strength = computed(() => password.length >= 8 ? 'strong' : 'weak');
 Look a little deeper into `watch`
 
 There are 5 ways to use watch, each of them have different behavior,  
-we are going to discuss 1 ~ 4 among them.
+we are going to discuss 1 ~ 4 among them, and conclude a few performance tips.
 
 ```js
 const saved = ref(false);
@@ -564,6 +564,8 @@ watch(computedSaved, watchHandler);
 watch([state], watchHandler);
 ```
 
+A link to watch's document: [reactivity-core: watch](https://vuejs.org/api/reactivity-core.html#watch)
+
 ---
 
 # Reactivity on Watch (Callback)
@@ -575,11 +577,9 @@ const watchHandler = () => state.status.saved && console.log('Saved!');
 watch(() => state.status.saved, watchHandler);
 ```
 
-<br/>
-
 `watch` is consisted by 3 steps
 1. *Dependency* - Collecting and update dependency in `() => state.status.saved` when triggered
-2. *Value Change* - Check whether return value of `() => state.status.saved` changed (by `Object.is`) 
+2. *Value Change* - Check whether return value of `() => state.status.saved` changed (by [Object.is](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is)) 
 3. *Callback* - Invoke `watchHandler` when the value is different.
 
 <br/>
@@ -788,6 +788,32 @@ state.status = { saved: false };
 // trigger `() => anotherStatus.value.saved` but value didn't change, hence `watchHandler` was not invoked
 ```
 
+---
+
+# Reactivity on Watch (Performance)
+Tips to provide better performance
+
+To have better performance, we must
+
+1. Reduce time complexity for computing `source`, `callback`
+2. Reduce frequency that `source`, `callback` being triggered
+
+---
+
+# Reactivity on Watch (Performance)
+Tips to provide better performance
+
+1. <span class="text-red-600 text-2xl">Do not </span>pass `reactive`, `ref().value`, or `ref()` with `{ deep: true }` into `source`
+    - <span class="text-sm">DFS on object cost time, and every change triggers `callback`</span>
+2. <span class="text-red-600 text-2xl">Do not </span>return `object` from `source` callback
+    - <span class="text-sm">Value change check always passes, if you always return a new object in `source` callback.</span>
+    - <span class="text-sm">An alternaltive solution is serialize the object into primitive value by `JSON.stringify` or some custom stable function</span>
+3. <span class="text-red-600 text-2xl">Do not </span>watch on a `computed` that represents an object.
+    - <span class="text-sm">`computed().value` recreates every time, so value change check always passes even value unchanged.</span>
+4. <span class="text-green-600 text-2xl">Do </span>watch on a primitive value that returns from callback or in `ref`, `computed`, `reactive`
+    - <span class="text-sm">So that vue could correctly monitor value change by using `Object.is`.</span>
+5. <span class="text-green-600 text-2xl">Do </span>watch object (`reactive`, `computed` ...) after you evaluated about performance.
+    - <span class="text-sm">Of course you can! Just be careful about that.</span>
 ---
 
 # That's all, folks!
