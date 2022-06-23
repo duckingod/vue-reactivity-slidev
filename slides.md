@@ -790,6 +790,28 @@ state.status = { saved: false };
 
 ---
 
+# Reactivity on Watch (Computed)
+Look a little deeper into `watch`
+
+Can you tell why this happened?
+```js
+import { reactive, computed, watch, nextTick } from 'vue'
+const state = reactive({ useDefault: false, config: { darkMode: false }, default: { darkMode: false },  });
+const config = computed(() => ({
+  darkMode: state.useDefault ? state.config.darkMode : state.default.darkMode,
+}));
+watch(config, (newConfig, oldConfig) => console.log('changed', newConfig, oldConfig));
+
+(async () => {
+  state.useDefault = true;  // changed { darkMode: false } { darkMode: false }
+  await nextTick();
+  state.useDefault = false; // changed { darkMode: false } { darkMode: false }
+  await nextTick();
+})();
+```
+
+---
+
 # Reactivity on Watch (Performance)
 Tips to provide better performance
 
@@ -807,13 +829,13 @@ Tips to provide better performance
     - <span class="text-sm">DFS on object cost time, and every change triggers `callback`</span>
 2. <span class="text-red-600 text-2xl">Do not </span>return `object` from `source` callback
     - <span class="text-sm">Value change check always passes, if you always return a new object in `source` callback.</span>
-    - <span class="text-sm">An alternaltive solution is serialize the object into primitive value by `JSON.stringify` or some custom stable function</span>
 3. <span class="text-red-600 text-2xl">Do not </span>watch on a `computed` that represents an object.
     - <span class="text-sm">`computed().value` recreates every time, so value change check always passes even value unchanged.</span>
 4. <span class="text-green-600 text-2xl">Do </span>watch on a callback returning a primitive value or `ref`, `computed` with a primitive value
     - <span class="text-sm">So that vue could correctly monitor value change by using `Object.is`.</span>
 5. <span class="text-green-600 text-2xl">Do </span>watch object (`reactive`, `computed` ...) after you evaluated about the performance.
-    - <span class="text-sm">Of course you can! Just be careful about that.</span>
+    - <span class="text-sm">Of course you can! Just be careful about that. Or consider using `watchEffect` if dependencies are too complicated</span>
+    - <span class="text-sm">Another solution is producing a smaller object by callback, and make sure only required dependencies are accessed</span>
 
 ---
 
