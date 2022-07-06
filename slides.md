@@ -774,8 +774,8 @@ watch(() => state.value.status, watchHandle);
 Look a little deeper into `watch`
 
 `computed` is a `ref` but different in several ways:
-  1. `.value` is plain object, not `reactive`, hence you cannot track property change in `.value` directly
-  2. Re-create `.value` whenever compute callback triggered.
+  1. Re-create `.value` whenever compute callback triggered.
+  2. `.value` is plain object, not `reactive`, hence you cannot track property change in `.value` directly
 
 As a result, you could still use deep property in `watch` to detemine whether the value changed, since `.value` will be re-created everytime.
 
@@ -815,27 +815,34 @@ watch(config, (newConfig, oldConfig) => console.log('changed', newConfig, oldCon
 # Reactivity on Watch (Performance)
 Tips to provide better performance
 
-To have better performance, we must
+The overall time spend on a `watch`` is
+> #(triggered) * (source time complexity) + #(value changed) * (callback time complexity)
 
-1. Reduce time complexity for computing `source`, `callback`
-2. Reduce frequency that `source`, `callback` being triggered
+<br/>
+
+To have better performance, we could
+
+1. Reduce frequency that `source`, `callback` being triggered
+    - Collect only essential dependencies (reduce `#(triggered)`)
+    - Watch on primitive value (reduce `#(value changed)`)
+2. Reduce time complexity for computing `source`, `callback`
 
 ---
 
 # Reactivity on Watch (Performance)
 Tips to provide better performance
 
-1. <span class="text-red-600 text-2xl">Do not </span>pass `reactive`, `ref().value`, or `ref()` with `{ deep: true }` into `source`
+1. <span class="text-red-600 text-2xl">Be careful when </span>pass `reactive`, `ref().value`, or `ref()` with `{ deep: true }` into `source`
     - <span class="text-sm">DFS on object cost time, and every change triggers `callback`</span>
-2. <span class="text-red-600 text-2xl">Do not </span>return `object` from `source` callback
+2. <span class="text-red-600 text-2xl">Be careful when </span>return `object` from `source` callback
     - <span class="text-sm">Value change check always passes, if you always return a new object in `source` callback.</span>
-3. <span class="text-red-600 text-2xl">Do not </span>watch on a `computed` that represents an object.
+3. <span class="text-red-600 text-2xl">Be careful when </span>watch on a `computed` that represents an object.
     - <span class="text-sm">`computed().value` recreates every time, so value change check always passes even value unchanged.</span>
 4. <span class="text-green-600 text-2xl">Do </span>watch on a callback returning a primitive value or `ref`, `computed` with a primitive value
-    - <span class="text-sm">So that vue could correctly monitor value change by using `Object.is`.</span>
 5. <span class="text-green-600 text-2xl">Do </span>watch object (`reactive`, `computed` ...) after you evaluated about the performance.
     - <span class="text-sm">Of course you can! Just be careful about that. Or consider using `watchEffect` if dependencies are too complicated</span>
     - <span class="text-sm">Another solution is producing a smaller object by callback, and make sure only required dependencies are accessed</span>
+    - <span class="text-sm">Sometimes `JSON.stringify` might help you by converting an object to a primitive value</span>
 
 ---
 
