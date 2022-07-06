@@ -815,7 +815,7 @@ watch(config, (newConfig, oldConfig) => console.log('changed', newConfig, oldCon
 # Reactivity on Watch (Performance)
 Tips to provide better performance
 
-The overall time spend on a `watch`` is
+The overall time spent on a `watch` is
 > #(triggered) * (source time complexity) + #(value changed) * (callback time complexity)
 
 <br/>
